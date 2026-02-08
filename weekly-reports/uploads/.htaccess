@@ -1,0 +1,9 @@
+# منع تشغيل ملفات PHP في مجلد الرفع
+<FilesMatch "\.php$">
+    Deny from all
+</FilesMatch>
+
+# السماح فقط بأنواع الملفات المحددة
+<FilesMatch "\.(jpg|jpeg|png|pdf|docx|xlsx)$">
+    Allow from all
+</FilesMatch>

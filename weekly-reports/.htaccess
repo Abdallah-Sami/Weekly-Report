@@ -1,0 +1,13 @@
+# إعادة التوجيه للصفحة الرئيسية
+RewriteEngine On
+RewriteBase /weekly-reports/
+
+# منع الوصول المباشر لملفات الإعدادات
+<FilesMatch "\.(ini|log|conf)$">
+    Deny from all
+</FilesMatch>
+
+# حماية مجلد config
+<IfModule mod_rewrite.c>
+    RewriteRule ^config/ - [F,L]
+</IfModule>
