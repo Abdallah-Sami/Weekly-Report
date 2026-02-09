@@ -2,6 +2,7 @@
 /**
  * رأس الصفحة المشترك
  */
+ob_start();
 require_once __DIR__ . '/functions.php';
 startSecureSession();
 requireLogin();

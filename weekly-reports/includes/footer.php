@@ -12,3 +12,4 @@
     <?php if (isset($extraScripts)) echo $extraScripts; ?>
 </body>
 </html>
+<?php ob_end_flush(); ?>
