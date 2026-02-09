@@ -20,15 +20,13 @@
                 </a>
             </li>
 
-            <?php if (isAdmin() || isManager()): ?>
-            <!-- إنشاء تقرير -->
+            <!-- إنشاء تقرير - متاح للجميع -->
             <li class="nav-item">
                 <a class="nav-link <?= isActivePage('create_report') ?>" href="<?= SITE_URL ?>/pages/create_report.php">
                     <i class="fas fa-plus-circle me-2"></i>
                     <span>إنشاء تقرير جديد</span>
                 </a>
             </li>
-            <?php endif; ?>
 
             <!-- أرشيف التقارير -->
             <li class="nav-item">

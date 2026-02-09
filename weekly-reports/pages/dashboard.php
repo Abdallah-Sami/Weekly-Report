@@ -51,11 +51,9 @@ $latestReports = dbFetchAll(
         </nav>
     </div>
     <div>
-        <?php if (isAdmin() || isManager()): ?>
         <a href="<?= SITE_URL ?>/pages/create_report.php" class="btn btn-primary">
             <i class="fas fa-plus me-1"></i>إنشاء تقرير جديد
         </a>
-        <?php endif; ?>
     </div>
 </div>
 
@@ -132,7 +130,6 @@ $latestReports = dbFetchAll(
 
 <!-- الأزرار السريعة -->
 <div class="row g-3 mb-4">
-    <?php if (isAdmin() || isManager()): ?>
     <div class="col-md-4">
         <a href="<?= SITE_URL ?>/pages/create_report.php" class="card quick-action-card border-0 shadow-sm text-decoration-none h-100">
             <div class="card-body text-center py-4">
@@ -144,7 +141,6 @@ $latestReports = dbFetchAll(
             </div>
         </a>
     </div>
-    <?php endif; ?>
     <div class="col-md-4">
         <a href="<?= SITE_URL ?>/pages/reports_archive.php" class="card quick-action-card border-0 shadow-sm text-decoration-none h-100">
             <div class="card-body text-center py-4">

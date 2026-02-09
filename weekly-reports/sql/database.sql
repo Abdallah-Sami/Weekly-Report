@@ -90,6 +90,26 @@ CREATE TABLE IF NOT EXISTS annual_plans (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
+-- جدول مؤشرات الأداء (KPIs) للخطط السنوية
+-- =====================================================
+CREATE TABLE IF NOT EXISTS plan_indicators (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    plan_id INT NOT NULL,
+    indicator_name VARCHAR(255) NOT NULL,
+    target_value DECIMAL(10,2) NOT NULL DEFAULT 0,
+    current_value DECIMAL(10,2) NOT NULL DEFAULT 0,
+    unit VARCHAR(50) DEFAULT '%',
+    quarter ENUM('Q1', 'Q2', 'Q3', 'Q4', 'annual') NOT NULL DEFAULT 'annual',
+    status ENUM('not_started', 'in_progress', 'achieved', 'delayed') NOT NULL DEFAULT 'not_started',
+    notes TEXT NULL,
+    updated_by INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (plan_id) REFERENCES annual_plans(id) ON DELETE CASCADE,
+    FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
 -- جدول الإشعارات
 -- =====================================================
 CREATE TABLE IF NOT EXISTS notifications (

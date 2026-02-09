@@ -374,6 +374,34 @@ function isCurrentWeek($weekStart, $weekEnd) {
     return $weekStart === $current['start'] && $weekEnd === $current['end'];
 }
 
+/**
+ * التحقق من إمكانية إنشاء تقرير
+ * الجميع يمكنهم إنشاء تقارير
+ */
+function canCreateReport() {
+    return isLoggedIn();
+}
+
+/**
+ * التحقق من إمكانية تعديل تقرير
+ * الموظف: لا يعدل
+ * المدير: يعدل تقارير قسمه الحالية والسابقة
+ * الرئيس: يعدل كل شيء
+ */
+function canEditReport($report) {
+    if (isAdmin()) return true;
+    if (isManager() && $report['created_by'] == $_SESSION['user_id']) return true;
+    return false;
+}
+
+/**
+ * التحقق من إمكانية حذف تقرير
+ * الرئيس فقط
+ */
+function canDeleteReport() {
+    return isAdmin();
+}
+
 // =====================================================
 // وظائف التنقل
 // =====================================================

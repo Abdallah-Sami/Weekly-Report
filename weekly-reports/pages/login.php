@@ -38,7 +38,7 @@ if (isset($_GET['timeout'])) {
         /* ====== الجانب الأيسر - الصورة/الرسومات ====== */
         .login-visual {
             flex: 1;
-            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 40%, #7c3aed 100%);
+            background: linear-gradient(135deg, #0c4a6e 0%, #075985 30%, #0369a1 60%, #0284c7 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -79,7 +79,7 @@ if (isset($_GET['timeout'])) {
         .visual-content .logo-icon {
             width: 100px;
             height: 100px;
-            background: rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.12);
             backdrop-filter: blur(10px);
             border-radius: 28px;
             display: flex;
@@ -163,7 +163,7 @@ if (isset($_GET['timeout'])) {
         .login-brand .brand-icon {
             width: 56px;
             height: 56px;
-            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            background: linear-gradient(135deg, #0369a1, #0ea5e9);
             border-radius: 16px;
             display: inline-flex;
             align-items: center;
@@ -227,14 +227,14 @@ if (isset($_GET['timeout'])) {
         }
 
         .form-floating-custom .form-control:focus {
-            border-color: #2563eb;
+            border-color: #0284c7;
             background: #ffffff;
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+            box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.12);
         }
 
         .form-floating-custom .form-control:focus ~ .input-icon,
         .form-floating-custom .form-control:focus + .input-icon {
-            color: #2563eb;
+            color: #0284c7;
         }
 
         .form-floating-custom .toggle-password {
@@ -273,7 +273,7 @@ if (isset($_GET['timeout'])) {
         .custom-check input[type="checkbox"] {
             width: 18px;
             height: 18px;
-            accent-color: #2563eb;
+            accent-color: #0284c7;
             border-radius: 4px;
             cursor: pointer;
         }
@@ -289,7 +289,7 @@ if (isset($_GET['timeout'])) {
         .btn-login {
             width: 100%;
             padding: 0.85rem;
-            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            background: linear-gradient(135deg, #0369a1, #0ea5e9);
             border: none;
             border-radius: 12px;
             color: white;
@@ -314,7 +314,7 @@ if (isset($_GET['timeout'])) {
 
         .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+            box-shadow: 0 8px 25px rgba(3, 105, 161, 0.45);
         }
 
         .btn-login:hover::before {
@@ -492,7 +492,7 @@ if (isset($_GET['timeout'])) {
             title: 'خطأ في تسجيل الدخول',
             text: '<?= e($_GET['error'] === 'invalid' ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة' : 'حدث خطأ غير متوقع') ?>',
             confirmButtonText: 'حسناً',
-            confirmButtonColor: '#2563eb'
+            confirmButtonColor: '#0284c7'
         });
         <?php endif; ?>
     </script>

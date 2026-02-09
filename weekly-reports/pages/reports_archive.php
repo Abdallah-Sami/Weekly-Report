@@ -78,11 +78,9 @@ $departments = getDepartments();
             </ol>
         </nav>
     </div>
-    <?php if (isAdmin() || isManager()): ?>
     <a href="<?= SITE_URL ?>/pages/create_report.php" class="btn btn-primary">
         <i class="fas fa-plus me-1"></i>تقرير جديد
     </a>
-    <?php endif; ?>
 </div>
 
 <!-- فلترة البحث -->
@@ -165,15 +163,12 @@ $departments = getDepartments();
                                     <a href="<?= SITE_URL ?>/pages/view_report.php?id=<?= $r['id'] ?>" class="btn btn-outline-primary" title="عرض">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <?php
-                                    $canEditThis = isAdmin() || (isManager() && $r['created_by'] == $_SESSION['user_id'] && isCurrentWeek($r['week_start'], $r['week_end']));
-                                    if ($canEditThis):
-                                    ?>
+                                    <?php if (canEditReport($r)): ?>
                                     <a href="<?= SITE_URL ?>/pages/edit_report.php?id=<?= $r['id'] ?>" class="btn btn-outline-warning" title="تعديل">
                                         <i class="fas fa-edit"></i>
                                     </a>
                                     <?php endif; ?>
-                                    <?php if (isAdmin()): ?>
+                                    <?php if (canDeleteReport()): ?>
                                     <button class="btn btn-outline-danger" onclick="deleteReport(<?= $r['id'] ?>)" title="حذف">
                                         <i class="fas fa-trash"></i>
                                     </button>

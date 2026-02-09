@@ -4,7 +4,7 @@
  */
 $pageTitle = 'تعديل التقرير';
 require_once __DIR__ . '/../includes/header.php';
-requireRole(['admin', 'manager']);
+requireLogin();
 
 $reportId = (int)($_GET['id'] ?? 0);
 if (!$reportId) {
@@ -18,12 +18,10 @@ if (!$report) {
     redirect('pages/reports_archive.php');
 }
 
-// التحقق من الصلاحيات
-if (isManager()) {
-    if ($report['created_by'] != $_SESSION['user_id'] || !isCurrentWeek($report['week_start'], $report['week_end'])) {
-        setError('ليس لديك صلاحية تعديل هذا التقرير');
-        redirect('pages/reports_archive.php');
-    }
+// التحقق من الصلاحيات باستخدام نظام الصلاحيات الجديد
+if (!canEditReport($report)) {
+    setError('ليس لديك صلاحية تعديل هذا التقرير');
+    redirect('pages/reports_archive.php');
 }
 
 $departments = getDepartments();
