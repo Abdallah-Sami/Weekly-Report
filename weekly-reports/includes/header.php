@@ -18,6 +18,9 @@ $pageTitle = $pageTitle ?? 'لوحة التحكم';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e($pageTitle) ?> - <?= e(SITE_NAME) ?></title>
 
+    <!-- Google Fonts - Tajawal -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
     <!-- Bootstrap 5 RTL -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
     <!-- Font Awesome 6 -->
@@ -29,25 +32,26 @@ $pageTitle = $pageTitle ?? 'لوحة التحكم';
 </head>
 <body>
     <!-- شريط التنقل العلوي -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top shadow-sm">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
         <div class="container-fluid">
             <!-- زر القائمة الجانبية للجوال -->
-            <button class="btn btn-link text-white d-lg-none me-2" id="sidebarToggle">
-                <i class="fas fa-bars fa-lg"></i>
+            <button class="btn btn-link text-white d-lg-none me-2 p-0" id="sidebarToggle" style="font-size: 1.2rem;">
+                <i class="fas fa-bars"></i>
             </button>
 
             <!-- اسم الموقع -->
-            <a class="navbar-brand fw-bold" href="<?= SITE_URL ?>/pages/dashboard.php">
+            <a class="navbar-brand" href="<?= SITE_URL ?>/pages/dashboard.php">
                 <i class="fas fa-chart-line me-2"></i>
-                <?= e(SITE_NAME) ?>
+                <span class="d-none d-sm-inline"><?= e(SITE_NAME) ?></span>
+                <span class="d-sm-none">التقارير</span>
             </a>
 
             <!-- القائمة اليمنى -->
-            <div class="d-flex align-items-center ms-auto">
+            <div class="d-flex align-items-center ms-auto gap-1">
                 <!-- الإشعارات -->
-                <div class="dropdown me-3">
-                    <button class="btn btn-link text-white position-relative" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-bell fa-lg"></i>
+                <div class="dropdown">
+                    <button class="btn btn-link text-white position-relative px-2" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 1.1rem;">
+                        <i class="fas fa-bell"></i>
                         <?php if ($unreadCount > 0): ?>
                             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge">
                                 <?= $unreadCount ?>
@@ -101,16 +105,24 @@ $pageTitle = $pageTitle ?? 'لوحة التحكم';
                     </ul>
                 </div>
 
+                <!-- فاصل -->
+                <div class="vr mx-2 opacity-25" style="height: 24px; align-self: center;"></div>
+
                 <!-- قائمة المستخدم -->
                 <div class="dropdown">
-                    <button class="btn btn-link text-white dropdown-toggle text-decoration-none" data-bs-toggle="dropdown">
-                        <i class="fas fa-user-circle me-1"></i>
-                        <span class="d-none d-md-inline"><?= e($currentUser['name'] ?? '') ?></span>
+                    <button class="btn btn-link text-white dropdown-toggle text-decoration-none d-flex align-items-center gap-2 px-2" data-bs-toggle="dropdown">
+                        <div class="d-flex align-items-center justify-content-center rounded-circle" style="width:32px; height:32px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); font-size: 0.8rem;">
+                            <?= mb_substr($currentUser['name'] ?? '', 0, 1) ?>
+                        </div>
+                        <span class="d-none d-md-inline" style="font-size: 0.85rem;"><?= e($currentUser['name'] ?? '') ?></span>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-start shadow">
+                    <ul class="dropdown-menu dropdown-menu-start">
                         <li class="dropdown-header">
                             <div class="fw-bold"><?= e($currentUser['name'] ?? '') ?></div>
                             <div class="small text-muted"><?= getRoleName($currentUser['role'] ?? '') ?></div>
+                            <?php if ($currentUser['department_name'] ?? null): ?>
+                            <div class="smaller text-muted"><?= e($currentUser['department_name']) ?></div>
+                            <?php endif; ?>
                         </li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
