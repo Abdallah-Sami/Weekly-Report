@@ -135,7 +135,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('pages/view_report.php?id=' . $reportId);
 
     } catch (Exception $e) {
-        db()->rollBack();
+        if (db()->inTransaction()) {
+            db()->rollBack();
+        }
         setError('حدث خطأ: ' . $e->getMessage());
     }
 }
