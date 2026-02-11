@@ -12,7 +12,7 @@ define('DB_PASS', '');
 define('DB_CHARSET', 'utf8mb4');
 
 // إعدادات الموقع
-define('SITE_NAME', 'وكالة البحوث والتنمية الصناعية');
+define('SITE_NAME', 'وكيلة البحوث والتنمية الصناعية');
 define('SITE_URL', 'http://localhost/weekly-reports');
 define('BASE_PATH', dirname(__DIR__));
 

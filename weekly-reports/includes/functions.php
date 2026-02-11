@@ -164,7 +164,7 @@ function getStatusBadge($status) {
 // =====================================================
 
 function canCreateReport() {
-    return isCoordinator() || isAdmin();
+    return isCoordinator();
 }
 
 function canFillReport() {
@@ -172,21 +172,21 @@ function canFillReport() {
 }
 
 function canEditFullReport() {
-    return isCoordinator() || isAdmin();
+    return isCoordinator();
 }
 
 function canEditDepartmentSection($report, $departmentId) {
-    if (isCoordinator() || isAdmin()) return true;
+    if (isCoordinator()) return true;
     if ((isManager() || isEmployee()) && $departmentId == $_SESSION['user_department_id'] && $report['status'] === 'open') return true;
     return false;
 }
 
 function canPublishReport() {
-    return isCoordinator() || isAdmin();
+    return isCoordinator();
 }
 
 function canDeleteReport() {
-    return isAdmin();
+    return isCoordinator();
 }
 
 function canViewReport($report) {
@@ -199,7 +199,7 @@ function canViewReport($report) {
 }
 
 function canEditReport($report) {
-    if (isAdmin() || isCoordinator()) return true;
+    if (isCoordinator()) return true;
     if ((isManager() || isEmployee()) && $report['status'] === 'open') return true;
     return false;
 }

@@ -132,7 +132,7 @@ foreach ($details as $d) {
 <!-- معلومات التقرير -->
 <div class="card border-0 shadow-sm mb-4" id="printArea">
     <div class="card-header bg-primary text-white text-center py-3">
-        <h5 class="mb-1">وكالة البحوث والتنمية الصناعية</h5>
+        <h5 class="mb-1">وكيلة البحوث والتنمية الصناعية</h5>
         <p class="mb-0 opacity-75">تقرير الإنجازات الأسبوعي</p>
     </div>
     <div class="card-body">

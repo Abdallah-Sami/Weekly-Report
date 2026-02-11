@@ -61,7 +61,7 @@ foreach ($departments as $dept) {
         $subject = "=?UTF-8?B?" . base64_encode('تذكير: تعبئة التقرير الأسبوعي') . "?=";
         $htmlBody = "
         <div dir='rtl' style='font-family: Arial, sans-serif; padding: 20px;'>
-            <h2 style='color: #0e7490;'>وكالة البحوث والتنمية الصناعية</h2>
+            <h2 style='color: #0e7490;'>وكيلة البحوث والتنمية الصناعية</h2>
             <h3>تذكير بتعبئة التقرير الأسبوعي</h3>
             <p>مرحباً <strong>{$user['name']}</strong>،</p>
             <p>نذكركم بتعبئة إنجازات قسم <strong>{$user['department_name']}</strong> في التقرير الأسبوعي.</p>

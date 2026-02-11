@@ -4,7 +4,7 @@
  */
 $pageTitle = 'تعديل التقرير';
 require_once __DIR__ . '/../includes/header.php';
-requireRole(['coordinator', 'admin']);
+requireRole(['coordinator']);
 
 $reportId = (int)($_GET['id'] ?? 0);
 if (!$reportId) {

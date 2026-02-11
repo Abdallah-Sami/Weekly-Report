@@ -1,6 +1,6 @@
 -- =====================================================
 -- نظام إدارة التقارير الأسبوعية
--- وكالة البحوث والتنمية الصناعية
+-- وكيلة البحوث والتنمية الصناعية
 -- =====================================================
 
 -- إنشاء قاعدة البيانات
@@ -122,10 +122,10 @@ CREATE TABLE IF NOT EXISTS activity_logs (
 
 -- الأقسام الأربعة
 INSERT INTO departments (name) VALUES
-('قسم التنمية الصناعية'),
-('قسم مصادر التعلم'),
-('قسم الابتكار'),
-('قسم البحوث');
+('البحوث'),
+('مصادر التعلم'),
+('التنمية الصناعية'),
+('الابتكار');
 
 -- المستخدمين
 -- Admin@123
@@ -135,18 +135,18 @@ INSERT INTO users (name, email, password, role, department_id) VALUES
 -- Pass@123
 INSERT INTO users (name, email, password, role, department_id) VALUES
 ('وكيلة الوكالة', 'director@example.com', '$2y$12$ANcbaTeC5zObXgdTaquceuH.apjAII9bnThcvvuRrn86OgcHCOiJS', 'director', NULL),
-('المنسق', 'coordinator@example.com', '$2y$12$ANcbaTeC5zObXgdTaquceuH.apjAII9bnThcvvuRrn86OgcHCOiJS', 'coordinator', NULL);
+('المنسقة', 'coordinator@example.com', '$2y$12$ANcbaTeC5zObXgdTaquceuH.apjAII9bnThcvvuRrn86OgcHCOiJS', 'coordinator', NULL);
 
 -- مدراء الأقسام - Pass@123
 INSERT INTO users (name, email, password, role, department_id) VALUES
-('مدير التنمية الصناعية', 'mgr.industrial@example.com', '$2y$12$ANcbaTeC5zObXgdTaquceuH.apjAII9bnThcvvuRrn86OgcHCOiJS', 'manager', 1),
+('مدير البحوث', 'mgr.research@example.com', '$2y$12$ANcbaTeC5zObXgdTaquceuH.apjAII9bnThcvvuRrn86OgcHCOiJS', 'manager', 1),
 ('مدير مصادر التعلم', 'mgr.learning@example.com', '$2y$12$ANcbaTeC5zObXgdTaquceuH.apjAII9bnThcvvuRrn86OgcHCOiJS', 'manager', 2),
-('مدير الابتكار', 'mgr.innovation@example.com', '$2y$12$ANcbaTeC5zObXgdTaquceuH.apjAII9bnThcvvuRrn86OgcHCOiJS', 'manager', 3),
-('مدير البحوث', 'mgr.research@example.com', '$2y$12$ANcbaTeC5zObXgdTaquceuH.apjAII9bnThcvvuRrn86OgcHCOiJS', 'manager', 4);
+('مدير التنمية الصناعية', 'mgr.industrial@example.com', '$2y$12$ANcbaTeC5zObXgdTaquceuH.apjAII9bnThcvvuRrn86OgcHCOiJS', 'manager', 3),
+('مدير الابتكار', 'mgr.innovation@example.com', '$2y$12$ANcbaTeC5zObXgdTaquceuH.apjAII9bnThcvvuRrn86OgcHCOiJS', 'manager', 4);
 
 -- موظفي الأقسام - Pass@123
 INSERT INTO users (name, email, password, role, department_id) VALUES
-('موظف التنمية الصناعية', 'emp.industrial@example.com', '$2y$12$ANcbaTeC5zObXgdTaquceuH.apjAII9bnThcvvuRrn86OgcHCOiJS', 'employee', 1),
+('موظف البحوث', 'emp.research@example.com', '$2y$12$ANcbaTeC5zObXgdTaquceuH.apjAII9bnThcvvuRrn86OgcHCOiJS', 'employee', 1),
 ('موظف مصادر التعلم', 'emp.learning@example.com', '$2y$12$ANcbaTeC5zObXgdTaquceuH.apjAII9bnThcvvuRrn86OgcHCOiJS', 'employee', 2),
-('موظف الابتكار', 'emp.innovation@example.com', '$2y$12$ANcbaTeC5zObXgdTaquceuH.apjAII9bnThcvvuRrn86OgcHCOiJS', 'employee', 3),
-('موظف البحوث', 'emp.research@example.com', '$2y$12$ANcbaTeC5zObXgdTaquceuH.apjAII9bnThcvvuRrn86OgcHCOiJS', 'employee', 4);
+('موظف التنمية الصناعية', 'emp.industrial@example.com', '$2y$12$ANcbaTeC5zObXgdTaquceuH.apjAII9bnThcvvuRrn86OgcHCOiJS', 'employee', 3),
+('موظف الابتكار', 'emp.innovation@example.com', '$2y$12$ANcbaTeC5zObXgdTaquceuH.apjAII9bnThcvvuRrn86OgcHCOiJS', 'employee', 4);

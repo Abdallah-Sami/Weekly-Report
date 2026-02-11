@@ -5,7 +5,7 @@
  */
 $pageTitle = 'إنشاء تقرير جديد';
 require_once __DIR__ . '/../includes/header.php';
-requireRole(['coordinator', 'admin']);
+requireRole(['coordinator']);
 
 $weekRange = getCurrentWeekRange();
 
@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div class="card-body">
                     <div class="text-center mb-4">
-                        <h5 class="fw-bold text-primary">وكالة البحوث والتنمية الصناعية</h5>
+                        <h5 class="fw-bold text-primary">وكيلة البحوث والتنمية الصناعية</h5>
                         <p class="text-muted">إنشاء تقرير إنجازات أسبوعي جديد</p>
                     </div>
 

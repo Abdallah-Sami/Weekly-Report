@@ -184,7 +184,7 @@ $totalDepts = count($departments);
     <?php endif; ?>
 </div>
 
-<?php if ((isCoordinator() || isAdmin()) && $openReport): ?>
+<?php if (isCoordinator() && $openReport): ?>
 <!-- حالة تعبئة التقرير المفتوح -->
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
