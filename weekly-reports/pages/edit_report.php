@@ -1,10 +1,10 @@
 <?php
 /**
- * صفحة تعديل التقرير
+ * صفحة تعديل التقرير - للمنسق والمدير فقط
  */
 $pageTitle = 'تعديل التقرير';
 require_once __DIR__ . '/../includes/header.php';
-requireLogin();
+requireRole(['coordinator', 'admin']);
 
 $reportId = (int)($_GET['id'] ?? 0);
 if (!$reportId) {
@@ -15,12 +15,6 @@ if (!$reportId) {
 $report = dbFetchOne("SELECT * FROM reports WHERE id = ?", [$reportId]);
 if (!$report) {
     setError('التقرير غير موجود');
-    redirect('pages/reports_archive.php');
-}
-
-// التحقق من الصلاحيات باستخدام نظام الصلاحيات الجديد
-if (!canEditReport($report)) {
-    setError('ليس لديك صلاحية تعديل هذا التقرير');
     redirect('pages/reports_archive.php');
 }
 
@@ -49,9 +43,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('pages/edit_report.php?id=' . $reportId);
     }
 
-    $weekStart = $_POST['week_start'] ?? '';
-    $weekEnd = $_POST['week_end'] ?? '';
-    $status = ($_POST['action'] === 'publish') ? 'published' : 'draft';
+    $weekStart = $_POST['week_start'] ?? $report['week_start'];
+    $weekEnd = $_POST['week_end'] ?? $report['week_end'];
+    $action = $_POST['action'] ?? 'save';
+
+    // تحديد الحالة
+    if ($action === 'publish') {
+        $status = 'published';
+    } else {
+        $status = $report['status']; // يبقى على حالته الحالية (open)
+    }
 
     try {
         db()->beginTransaction();
@@ -61,9 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             [$weekStart, $weekEnd, $status, $reportId]
         );
 
+        // المنسق/المدير يستطيع تعديل جميع الأقسام
         foreach ($departments as $dept) {
-            if (isManager() && $dept['id'] != $_SESSION['user_department_id']) continue;
-
             $achievements = $_POST['achievements_' . $dept['id']] ?? '';
             $notes = $_POST['notes_' . $dept['id']] ?? '';
 
@@ -75,8 +75,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $detailId = $detailsMap[$dept['id']]['id'];
             } elseif (!empty($achievements)) {
                 dbQuery(
-                    "INSERT INTO report_details (report_id, department_id, achievements, notes) VALUES (?, ?, ?, ?)",
-                    [$reportId, $dept['id'], $achievements, $notes]
+                    "INSERT INTO report_details (report_id, department_id, achievements, notes, filled_by) VALUES (?, ?, ?, ?, ?)",
+                    [$reportId, $dept['id'], $achievements, $notes, $_SESSION['user_id']]
                 );
                 $detailId = db()->lastInsertId();
             } else {
@@ -120,9 +120,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         db()->commit();
 
-        createBulkNotification('تحديث تقرير', "تم تحديث التقرير #$reportId", 'report_updated');
-        logActivity('update_report', "تعديل التقرير #$reportId");
-        setSuccess('تم تحديث التقرير بنجاح');
+        if ($action === 'publish') {
+            // إشعار الوكيلة عند النشر
+            notifyDirector('تقرير جديد منشور', "تم نشر التقرير #$reportId", 'report_published');
+            // إشعار جميع المستخدمين
+            createBulkNotification('تقرير منشور', "تم نشر التقرير الأسبوعي #$reportId", 'report_published');
+            logActivity('publish_report', "نشر التقرير #$reportId");
+            setSuccess('تم نشر التقرير بنجاح');
+        } else {
+            logActivity('update_report', "تعديل التقرير #$reportId");
+            setSuccess('تم تحديث التقرير بنجاح');
+        }
+
         redirect('pages/view_report.php?id=' . $reportId);
 
     } catch (Exception $e) {
@@ -141,6 +150,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <li class="breadcrumb-item active">تعديل التقرير</li>
             </ol>
         </nav>
+    </div>
+    <div>
+        <?= getStatusBadge($report['status']) ?>
     </div>
 </div>
 
@@ -182,18 +194,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </thead>
                     <tbody>
                         <?php foreach ($departments as $dept):
-                            $disabled = (isManager() && $dept['id'] != $_SESSION['user_department_id']) ? 'disabled' : '';
                             $detail = $detailsMap[$dept['id']] ?? null;
                             $atts = $attachmentsMap[$dept['id']] ?? [];
                         ?>
                         <tr>
-                            <td class="fw-bold"><?= e($dept['name']) ?></td>
-                            <td>
-                                <textarea class="form-control" name="achievements_<?= $dept['id'] ?>"
-                                          rows="5" <?= $disabled ?>><?= e($detail['achievements'] ?? '') ?></textarea>
+                            <td class="fw-bold">
+                                <?= e($dept['name']) ?>
+                                <?php if ($detail && !empty($detail['achievements'])): ?>
+                                    <br><small class="text-success"><i class="fas fa-check-circle me-1"></i>معبأ</small>
+                                <?php else: ?>
+                                    <br><small class="text-warning"><i class="fas fa-clock me-1"></i>لم يُعبأ</small>
+                                <?php endif; ?>
                             </td>
                             <td>
-                                <?php if (empty($disabled)): ?>
+                                <textarea class="form-control" name="achievements_<?= $dept['id'] ?>"
+                                          rows="5"><?= e($detail['achievements'] ?? '') ?></textarea>
+                            </td>
+                            <td>
                                 <!-- المرفقات الحالية -->
                                 <?php foreach ($atts as $att): ?>
                                 <div class="d-flex align-items-center mb-2 p-2 bg-light rounded">
@@ -208,11 +225,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <input type="file" name="attachments_<?= $dept['id'] ?>[]" class="form-control mt-2" multiple
                                        accept=".jpg,.jpeg,.png,.pdf,.docx,.xlsx">
                                 <small class="text-muted">إضافة مرفقات جديدة</small>
-                                <?php endif; ?>
                             </td>
                             <td>
                                 <textarea class="form-control" name="notes_<?= $dept['id'] ?>"
-                                          rows="5" <?= $disabled ?>><?= e($detail['notes'] ?? '') ?></textarea>
+                                          rows="5"><?= e($detail['notes'] ?? '') ?></textarea>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -227,12 +243,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <i class="fas fa-times me-1"></i>إلغاء
         </a>
         <div>
-            <button type="submit" name="action" value="draft" class="btn btn-warning me-2">
-                <i class="fas fa-save me-1"></i>حفظ كمسودة
+            <button type="submit" name="action" value="save" class="btn btn-warning me-2">
+                <i class="fas fa-save me-1"></i>حفظ التغييرات
             </button>
-            <button type="submit" name="action" value="publish" class="btn btn-success">
+            <?php if ($report['status'] === 'open'): ?>
+            <button type="submit" name="action" value="publish" class="btn btn-success"
+                    onclick="return confirm('هل تريد نشر هذا التقرير؟ لن يمكن التعديل عليه بعد النشر.')">
                 <i class="fas fa-paper-plane me-1"></i>نشر التقرير
             </button>
+            <?php endif; ?>
         </div>
     </div>
 </form>

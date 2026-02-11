@@ -4,6 +4,7 @@
  */
 $pageTitle = 'أرشيف التقارير';
 require_once __DIR__ . '/../includes/header.php';
+requireLogin();
 
 // معاملات الفلترة
 $filterStatus = $_GET['status'] ?? '';
@@ -18,7 +19,12 @@ $perPage = 10;
 $where = [];
 $params = [];
 
-if ($filterStatus && in_array($filterStatus, ['draft', 'published'])) {
+// وكيلة الوكالة ترى المنشور فقط
+if (isDirector()) {
+    $where[] = "r.status = 'published'";
+}
+
+if ($filterStatus && in_array($filterStatus, ['open', 'published'])) {
     $where[] = "r.status = ?";
     $params[] = $filterStatus;
 }
@@ -38,12 +44,6 @@ if ($search) {
     $where[] = "(rd.achievements LIKE ? OR rd.notes LIKE ?)";
     $params[] = "%$search%";
     $params[] = "%$search%";
-}
-
-// مدير القسم يرى تقارير قسمه فقط
-if (isManager()) {
-    $where[] = "rd.department_id = ?";
-    $params[] = $_SESSION['user_department_id'];
 }
 
 $whereClause = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
@@ -78,9 +78,11 @@ $departments = getDepartments();
             </ol>
         </nav>
     </div>
+    <?php if (canCreateReport()): ?>
     <a href="<?= SITE_URL ?>/pages/create_report.php" class="btn btn-primary">
         <i class="fas fa-plus me-1"></i>تقرير جديد
     </a>
+    <?php endif; ?>
 </div>
 
 <!-- فلترة البحث -->
@@ -106,14 +108,16 @@ $departments = getDepartments();
                     <?php endforeach; ?>
                 </select>
             </div>
+            <?php if (!isDirector()): ?>
             <div class="col-md-2">
                 <label class="form-label small">الحالة</label>
                 <select class="form-select form-select-sm" name="status">
                     <option value="">الكل</option>
-                    <option value="draft" <?= $filterStatus === 'draft' ? 'selected' : '' ?>>مسودة</option>
+                    <option value="open" <?= $filterStatus === 'open' ? 'selected' : '' ?>>مفتوح للتعبئة</option>
                     <option value="published" <?= $filterStatus === 'published' ? 'selected' : '' ?>>منشور</option>
                 </select>
             </div>
+            <?php endif; ?>
             <div class="col-md-2">
                 <label class="form-label small">بحث</label>
                 <input type="text" class="form-control form-control-sm" name="search" value="<?= e($search) ?>" placeholder="بحث...">
@@ -163,7 +167,12 @@ $departments = getDepartments();
                                     <a href="<?= SITE_URL ?>/pages/view_report.php?id=<?= $r['id'] ?>" class="btn btn-outline-primary" title="عرض">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <?php if (canEditReport($r)): ?>
+                                    <?php if (canFillReport() && $r['status'] === 'open'): ?>
+                                    <a href="<?= SITE_URL ?>/pages/fill_report.php?id=<?= $r['id'] ?>" class="btn btn-outline-success" title="تعبئة قسمي">
+                                        <i class="fas fa-pen"></i>
+                                    </a>
+                                    <?php endif; ?>
+                                    <?php if (canEditFullReport() && $r['status'] === 'open'): ?>
                                     <a href="<?= SITE_URL ?>/pages/edit_report.php?id=<?= $r['id'] ?>" class="btn btn-outline-warning" title="تعديل">
                                         <i class="fas fa-edit"></i>
                                     </a>

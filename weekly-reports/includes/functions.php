@@ -10,16 +10,12 @@ require_once __DIR__ . '/../config/database.php';
 // وظائف الجلسة والمصادقة
 // =====================================================
 
-/**
- * بدء الجلسة بإعدادات آمنة
- */
 function startSecureSession() {
     if (session_status() === PHP_SESSION_NONE) {
         ini_set('session.cookie_httponly', 1);
         ini_set('session.use_strict_mode', 1);
         session_start();
     }
-    // التحقق من انتهاء الجلسة
     if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > SESSION_TIMEOUT)) {
         session_unset();
         session_destroy();
@@ -28,25 +24,16 @@ function startSecureSession() {
     $_SESSION['last_activity'] = time();
 }
 
-/**
- * التحقق من تسجيل الدخول
- */
 function isLoggedIn() {
     return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
 }
 
-/**
- * إلزام تسجيل الدخول - توجيه للتسجيل إذا لم يكن مسجلاً
- */
 function requireLogin() {
     if (!isLoggedIn()) {
         redirect('pages/login.php');
     }
 }
 
-/**
- * التحقق من الدور
- */
 function requireRole($roles) {
     requireLogin();
     if (!is_array($roles)) {
@@ -57,23 +44,22 @@ function requireRole($roles) {
     }
 }
 
-/**
- * التحقق من كون المستخدم مديراً عاماً
- */
 function isAdmin() {
     return isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
 }
 
-/**
- * التحقق من كون المستخدم مدير قسم
- */
+function isDirector() {
+    return isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'director';
+}
+
+function isCoordinator() {
+    return isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'coordinator';
+}
+
 function isManager() {
     return isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'manager';
 }
 
-/**
- * التحقق من كون المستخدم موظفاً
- */
 function isEmployee() {
     return isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'employee';
 }
@@ -82,9 +68,6 @@ function isEmployee() {
 // وظائف CSRF
 // =====================================================
 
-/**
- * إنشاء توكن CSRF
- */
 function generateCsrfToken() {
     if (empty($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -92,16 +75,10 @@ function generateCsrfToken() {
     return $_SESSION['csrf_token'];
 }
 
-/**
- * التحقق من توكن CSRF
- */
 function verifyCsrfToken($token) {
     return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
 }
 
-/**
- * حقل CSRF مخفي للنماذج
- */
 function csrfField() {
     return '<input type="hidden" name="csrf_token" value="' . generateCsrfToken() . '">';
 }
@@ -110,16 +87,10 @@ function csrfField() {
 // وظائف الأمان
 // =====================================================
 
-/**
- * تنظيف المدخلات من XSS
- */
 function e($string) {
     return htmlspecialchars($string ?? '', ENT_QUOTES, 'UTF-8');
 }
 
-/**
- * تنظيف المدخلات
- */
 function sanitize($input) {
     if (is_array($input)) {
         return array_map('sanitize', $input);
@@ -131,33 +102,21 @@ function sanitize($input) {
 // وظائف قاعدة البيانات
 // =====================================================
 
-/**
- * الحصول على اتصال قاعدة البيانات
- */
 function db() {
     return Database::getInstance()->getConnection();
 }
 
-/**
- * تنفيذ استعلام مع معاملات
- */
 function dbQuery($sql, $params = []) {
     $stmt = db()->prepare($sql);
     $stmt->execute($params);
     return $stmt;
 }
 
-/**
- * جلب صف واحد
- */
 function dbFetchOne($sql, $params = []) {
     $stmt = dbQuery($sql, $params);
     return $stmt->fetch();
 }
 
-/**
- * جلب جميع الصفوف
- */
 function dbFetchAll($sql, $params = []) {
     $stmt = dbQuery($sql, $params);
     return $stmt->fetchAll();
@@ -167,43 +126,33 @@ function dbFetchAll($sql, $params = []) {
 // وظائف المستخدمين
 // =====================================================
 
-/**
- * الحصول على بيانات المستخدم الحالي
- */
 function getCurrentUser() {
     if (!isLoggedIn()) return null;
     return dbFetchOne("SELECT u.*, d.name as department_name FROM users u LEFT JOIN departments d ON u.department_id = d.id WHERE u.id = ?", [$_SESSION['user_id']]);
 }
 
-/**
- * الحصول على اسم الدور بالعربية
- */
 function getRoleName($role) {
     $roles = [
-        'admin' => 'المدير العام',
+        'admin' => 'مدير النظام',
+        'director' => 'وكيلة الوكالة',
+        'coordinator' => 'المنسق',
         'manager' => 'مدير قسم',
         'employee' => 'موظف'
     ];
     return $roles[$role] ?? $role;
 }
 
-/**
- * الحصول على اسم حالة التقرير بالعربية
- */
 function getStatusName($status) {
     $statuses = [
-        'draft' => 'مسودة',
+        'open' => 'مفتوح للتعبئة',
         'published' => 'منشور'
     ];
     return $statuses[$status] ?? $status;
 }
 
-/**
- * الحصول على لون حالة التقرير
- */
 function getStatusBadge($status) {
     $badges = [
-        'draft' => 'warning',
+        'open' => 'warning',
         'published' => 'success'
     ];
     $color = $badges[$status] ?? 'secondary';
@@ -211,21 +160,72 @@ function getStatusBadge($status) {
 }
 
 // =====================================================
+// وظائف الصلاحيات الجديدة
+// =====================================================
+
+function canCreateReport() {
+    return isCoordinator() || isAdmin();
+}
+
+function canFillReport() {
+    return (isManager() || isEmployee()) && isset($_SESSION['user_department_id']);
+}
+
+function canEditFullReport() {
+    return isCoordinator() || isAdmin();
+}
+
+function canEditDepartmentSection($report, $departmentId) {
+    if (isCoordinator() || isAdmin()) return true;
+    if ((isManager() || isEmployee()) && $departmentId == $_SESSION['user_department_id'] && $report['status'] === 'open') return true;
+    return false;
+}
+
+function canPublishReport() {
+    return isCoordinator() || isAdmin();
+}
+
+function canDeleteReport() {
+    return isAdmin();
+}
+
+function canViewReport($report) {
+    if ($report['status'] === 'published') return true;
+    if ($report['status'] === 'open') {
+        if (isCoordinator() || isAdmin()) return true;
+        if (isManager() || isEmployee()) return true;
+    }
+    return false;
+}
+
+function canEditReport($report) {
+    if (isAdmin() || isCoordinator()) return true;
+    if ((isManager() || isEmployee()) && $report['status'] === 'open') return true;
+    return false;
+}
+
+function getOpenReport() {
+    return dbFetchOne("SELECT * FROM reports WHERE status = 'open' ORDER BY created_at DESC LIMIT 1");
+}
+
+function isDepartmentFilled($reportId, $departmentId) {
+    $detail = dbFetchOne(
+        "SELECT id FROM report_details WHERE report_id = ? AND department_id = ? AND achievements IS NOT NULL AND achievements != ''",
+        [$reportId, $departmentId]
+    );
+    return $detail ? true : false;
+}
+
+// =====================================================
 // وظائف الإشعارات
 // =====================================================
 
-/**
- * الحصول على عدد الإشعارات غير المقروءة
- */
 function getUnreadNotificationsCount() {
     if (!isLoggedIn()) return 0;
     $result = dbFetchOne("SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0", [$_SESSION['user_id']]);
     return $result['count'] ?? 0;
 }
 
-/**
- * الحصول على آخر الإشعارات
- */
 function getLatestNotifications($limit = 5) {
     if (!isLoggedIn()) return [];
     return dbFetchAll(
@@ -234,9 +234,6 @@ function getLatestNotifications($limit = 5) {
     );
 }
 
-/**
- * إنشاء إشعار جديد
- */
 function createNotification($userId, $title, $message, $type = 'reminder') {
     dbQuery(
         "INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)",
@@ -244,18 +241,35 @@ function createNotification($userId, $title, $message, $type = 'reminder') {
     );
 }
 
-/**
- * إنشاء إشعار لجميع المستخدمين أو مجموعة معينة
- */
 function createBulkNotification($title, $message, $type, $role = null) {
     $sql = "SELECT id FROM users";
     $params = [];
     if ($role) {
-        $sql .= " WHERE role = ?";
-        $params[] = $role;
+        if (is_array($role)) {
+            $placeholders = implode(',', array_fill(0, count($role), '?'));
+            $sql .= " WHERE role IN ($placeholders)";
+            $params = $role;
+        } else {
+            $sql .= " WHERE role = ?";
+            $params[] = $role;
+        }
     }
     $users = dbFetchAll($sql, $params);
     foreach ($users as $user) {
+        createNotification($user['id'], $title, $message, $type);
+    }
+}
+
+function notifyCoordinators($title, $message, $type = 'section_filled') {
+    $coordinators = dbFetchAll("SELECT id FROM users WHERE role IN ('coordinator', 'admin')");
+    foreach ($coordinators as $user) {
+        createNotification($user['id'], $title, $message, $type);
+    }
+}
+
+function notifyDirector($title, $message, $type = 'report_published') {
+    $directors = dbFetchAll("SELECT id FROM users WHERE role = 'director'");
+    foreach ($directors as $user) {
         createNotification($user['id'], $title, $message, $type);
     }
 }
@@ -264,9 +278,6 @@ function createBulkNotification($title, $message, $type, $role = null) {
 // وظائف سجل العمليات
 // =====================================================
 
-/**
- * تسجيل عملية في السجل
- */
 function logActivity($action, $description = '') {
     if (!isLoggedIn()) return;
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
@@ -280,51 +291,34 @@ function logActivity($action, $description = '') {
 // وظائف رفع الملفات
 // =====================================================
 
-/**
- * التحقق من صحة الملف المرفوع
- */
 function validateUploadedFile($file) {
     $errors = [];
-
     if ($file['error'] !== UPLOAD_ERR_OK) {
         $errors[] = 'حدث خطأ أثناء رفع الملف';
         return $errors;
     }
-
-    // التحقق من حجم الملف
     if ($file['size'] > MAX_FILE_SIZE) {
         $errors[] = 'حجم الملف يتجاوز الحد المسموح (5 ميجابايت)';
     }
-
-    // التحقق من نوع الملف
     $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
     if (!in_array($ext, ALLOWED_EXTENSIONS)) {
         $errors[] = 'نوع الملف غير مسموح. الأنواع المسموحة: ' . implode(', ', ALLOWED_EXTENSIONS);
     }
-
     return $errors;
 }
 
-/**
- * رفع ملف وحفظه
- */
 function uploadFile($file, $destination) {
     $errors = validateUploadedFile($file);
     if (!empty($errors)) {
         return ['success' => false, 'errors' => $errors];
     }
-
-    // إنشاء اسم فريد للملف
     $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
     $newName = uniqid('file_', true) . '.' . $ext;
     $fullPath = UPLOAD_PATH . $destination . '/' . $newName;
-
-    // إنشاء المجلد إذا لم يكن موجوداً
     $dir = dirname($fullPath);
     if (!is_dir($dir)) {
         mkdir($dir, 0755, true);
     }
-
     if (move_uploaded_file($file['tmp_name'], $fullPath)) {
         return [
             'success' => true,
@@ -333,7 +327,6 @@ function uploadFile($file, $destination) {
             'file_size' => $file['size']
         ];
     }
-
     return ['success' => false, 'errors' => ['فشل في حفظ الملف']];
 }
 
@@ -341,74 +334,31 @@ function uploadFile($file, $destination) {
 // وظائف التواريخ
 // =====================================================
 
-/**
- * تنسيق التاريخ بالصيغة العربية
- */
 function formatDate($date) {
     if (empty($date)) return '';
     return date('Y/m/d', strtotime($date));
 }
 
-/**
- * تنسيق التاريخ والوقت بالصيغة العربية
- */
 function formatDateTime($datetime) {
     if (empty($datetime)) return '';
     return date('Y/m/d h:i A', strtotime($datetime));
 }
 
-/**
- * الحصول على بداية ونهاية الأسبوع الحالي
- */
 function getCurrentWeekRange() {
     $start = date('Y-m-d', strtotime('monday this week'));
     $end = date('Y-m-d', strtotime('friday this week'));
     return ['start' => $start, 'end' => $end];
 }
 
-/**
- * التحقق من أن التاريخ في الأسبوع الحالي
- */
 function isCurrentWeek($weekStart, $weekEnd) {
     $current = getCurrentWeekRange();
     return $weekStart === $current['start'] && $weekEnd === $current['end'];
-}
-
-/**
- * التحقق من إمكانية إنشاء تقرير
- * الجميع يمكنهم إنشاء تقارير
- */
-function canCreateReport() {
-    return isLoggedIn();
-}
-
-/**
- * التحقق من إمكانية تعديل تقرير
- * الموظف: لا يعدل
- * المدير: يعدل تقارير قسمه الحالية والسابقة
- * الرئيس: يعدل كل شيء
- */
-function canEditReport($report) {
-    if (isAdmin()) return true;
-    if (isManager() && $report['created_by'] == $_SESSION['user_id']) return true;
-    return false;
-}
-
-/**
- * التحقق من إمكانية حذف تقرير
- * الرئيس فقط
- */
-function canDeleteReport() {
-    return isAdmin();
 }
 
 // =====================================================
 // وظائف التنقل
 // =====================================================
 
-/**
- * إعادة التوجيه
- */
 function redirect($url) {
     if (strpos($url, 'http') !== 0) {
         $url = SITE_URL . '/' . ltrim($url, '/');
@@ -417,16 +367,10 @@ function redirect($url) {
     exit;
 }
 
-/**
- * الحصول على الصفحة الحالية
- */
 function getCurrentPage() {
     return basename($_SERVER['PHP_SELF'], '.php');
 }
 
-/**
- * التحقق من الصفحة النشطة
- */
 function isActivePage($page) {
     return getCurrentPage() === $page ? 'active' : '';
 }
@@ -435,9 +379,6 @@ function isActivePage($page) {
 // وظائف مساعدة
 // =====================================================
 
-/**
- * تنسيق حجم الملف
- */
 function formatFileSize($bytes) {
     if ($bytes >= 1048576) {
         return number_format($bytes / 1048576, 2) . ' ميجابايت';
@@ -447,9 +388,6 @@ function formatFileSize($bytes) {
     return $bytes . ' بايت';
 }
 
-/**
- * الحصول على أيقونة نوع الملف
- */
 function getFileIcon($filename) {
     $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
     $icons = [
@@ -465,16 +403,10 @@ function getFileIcon($filename) {
     return $icons[$ext] ?? 'fa-file text-secondary';
 }
 
-/**
- * الحصول على جميع الأقسام
- */
 function getDepartments() {
     return dbFetchAll("SELECT * FROM departments ORDER BY id");
 }
 
-/**
- * عرض رسالة نجاح أو خطأ
- */
 function showAlert() {
     $html = '';
     if (isset($_SESSION['success'])) {
@@ -494,16 +426,10 @@ function showAlert() {
     return $html;
 }
 
-/**
- * تعيين رسالة نجاح
- */
 function setSuccess($message) {
     $_SESSION['success'] = $message;
 }
 
-/**
- * تعيين رسالة خطأ
- */
 function setError($message) {
     $_SESSION['error'] = $message;
 }

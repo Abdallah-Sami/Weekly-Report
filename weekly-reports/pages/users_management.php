@@ -23,7 +23,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email = trim($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
         $role = $_POST['role'] ?? 'employee';
-        $deptId = $_POST['department_id'] ? (int)$_POST['department_id'] : null;
+        $deptId = !empty($_POST['department_id']) ? (int)$_POST['department_id'] : null;
+
+        // الأدوار التي لا تحتاج قسم
+        if (in_array($role, ['admin', 'director', 'coordinator'])) {
+            $deptId = null;
+        }
 
         if (empty($name) || empty($email) || empty($password)) {
             setError('جميع الحقول مطلوبة');
@@ -49,7 +54,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $name = sanitize($_POST['name'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $role = $_POST['role'] ?? 'employee';
-        $deptId = $_POST['department_id'] ? (int)$_POST['department_id'] : null;
+        $deptId = !empty($_POST['department_id']) ? (int)$_POST['department_id'] : null;
+
+        // الأدوار التي لا تحتاج قسم
+        if (in_array($role, ['admin', 'director', 'coordinator'])) {
+            $deptId = null;
+        }
 
         $existing = dbFetchOne("SELECT id FROM users WHERE email = ? AND id != ?", [$email, $userId]);
         if ($existing) {
@@ -129,7 +139,13 @@ $users = dbFetchAll(
                         <td dir="ltr" class="text-end"><?= e($user['email']) ?></td>
                         <td>
                             <?php
-                            $roleBadges = ['admin' => 'danger', 'manager' => 'primary', 'employee' => 'secondary'];
+                            $roleBadges = [
+                                'admin' => 'danger',
+                                'director' => 'info',
+                                'coordinator' => 'success',
+                                'manager' => 'primary',
+                                'employee' => 'secondary'
+                            ];
                             ?>
                             <span class="badge bg-<?= $roleBadges[$user['role']] ?? 'secondary' ?>">
                                 <?= getRoleName($user['role']) ?>
@@ -184,7 +200,9 @@ $users = dbFetchAll(
                         <select class="form-select" name="role" id="addRole" onchange="toggleDeptField('add')">
                             <option value="employee">موظف</option>
                             <option value="manager">مدير قسم</option>
-                            <option value="admin">مدير عام</option>
+                            <option value="coordinator">المنسق</option>
+                            <option value="director">وكيلة الوكالة</option>
+                            <option value="admin">مدير النظام</option>
                         </select>
                     </div>
                     <div class="mb-3" id="addDeptField">
@@ -236,7 +254,9 @@ $users = dbFetchAll(
                         <select class="form-select" name="role" id="editRole" onchange="toggleDeptField('edit')">
                             <option value="employee">موظف</option>
                             <option value="manager">مدير قسم</option>
-                            <option value="admin">مدير عام</option>
+                            <option value="coordinator">المنسق</option>
+                            <option value="director">وكيلة الوكالة</option>
+                            <option value="admin">مدير النظام</option>
                         </select>
                     </div>
                     <div class="mb-3" id="editDeptField">
@@ -271,7 +291,12 @@ $extraScripts = "
 function toggleDeptField(prefix) {
     var role = document.getElementById(prefix + 'Role').value;
     var field = document.getElementById(prefix + 'DeptField');
-    field.style.display = (role === 'admin') ? 'none' : 'block';
+    // إخفاء حقل القسم للأدوار التي لا تحتاج قسم
+    if (role === 'admin' || role === 'director' || role === 'coordinator') {
+        field.style.display = 'none';
+    } else {
+        field.style.display = 'block';
+    }
 }
 
 function editUser(user) {

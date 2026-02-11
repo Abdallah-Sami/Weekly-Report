@@ -2,6 +2,7 @@
 /**
  * القائمة الجانبية
  */
+$openReport = getOpenReport();
 ?>
 <div class="sidebar bg-dark text-white" id="sidebar">
     <div class="sidebar-header text-center py-3 border-bottom border-secondary">
@@ -12,7 +13,7 @@
     </div>
     <nav class="sidebar-nav">
         <ul class="nav flex-column py-2">
-            <!-- لوحة التحكم -->
+            <!-- لوحة التحكم - للجميع -->
             <li class="nav-item">
                 <a class="nav-link <?= isActivePage('dashboard') ?>" href="<?= SITE_URL ?>/pages/dashboard.php">
                     <i class="fas fa-home me-2"></i>
@@ -20,15 +21,30 @@
                 </a>
             </li>
 
-            <!-- إنشاء تقرير - متاح للجميع -->
+            <?php if (canCreateReport()): ?>
+            <!-- إنشاء تقرير - المنسق والأدمن -->
             <li class="nav-item">
                 <a class="nav-link <?= isActivePage('create_report') ?>" href="<?= SITE_URL ?>/pages/create_report.php">
                     <i class="fas fa-plus-circle me-2"></i>
                     <span>إنشاء تقرير جديد</span>
                 </a>
             </li>
+            <?php endif; ?>
 
-            <!-- أرشيف التقارير -->
+            <?php if (canFillReport() && $openReport): ?>
+            <!-- تعبئة التقرير - المدير والموظف -->
+            <li class="nav-item">
+                <a class="nav-link <?= isActivePage('fill_report') ?>" href="<?= SITE_URL ?>/pages/fill_report.php?id=<?= $openReport['id'] ?>">
+                    <i class="fas fa-edit me-2"></i>
+                    <span>تعبئة التقرير الحالي</span>
+                    <?php if (!isDepartmentFilled($openReport['id'], $_SESSION['user_department_id'])): ?>
+                    <span class="badge bg-danger ms-1">جديد</span>
+                    <?php endif; ?>
+                </a>
+            </li>
+            <?php endif; ?>
+
+            <!-- أرشيف التقارير - للجميع -->
             <li class="nav-item">
                 <a class="nav-link <?= isActivePage('reports_archive') ?>" href="<?= SITE_URL ?>/pages/reports_archive.php">
                     <i class="fas fa-archive me-2"></i>
@@ -36,15 +52,17 @@
                 </a>
             </li>
 
-            <!-- الخطط السنوية -->
+            <?php if (!isEmployee()): ?>
+            <!-- الخطط السنوية - الكل ماعدا الموظف -->
             <li class="nav-item">
                 <a class="nav-link <?= isActivePage('upload_annual_plan') ?>" href="<?= SITE_URL ?>/pages/upload_annual_plan.php">
                     <i class="fas fa-calendar-alt me-2"></i>
                     <span>الخطط السنوية</span>
                 </a>
             </li>
+            <?php endif; ?>
 
-            <!-- الإشعارات -->
+            <!-- الإشعارات - للجميع -->
             <li class="nav-item">
                 <a class="nav-link <?= isActivePage('notifications') ?>" href="<?= SITE_URL ?>/pages/notifications.php">
                     <i class="fas fa-bell me-2"></i>

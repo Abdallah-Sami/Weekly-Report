@@ -4,6 +4,7 @@
  */
 $pageTitle = 'عرض التقرير';
 require_once __DIR__ . '/../includes/header.php';
+requireLogin();
 
 $reportId = (int)($_GET['id'] ?? 0);
 if (!$reportId) {
@@ -19,6 +20,18 @@ $report = dbFetchOne(
 
 if (!$report) {
     setError('التقرير غير موجود');
+    redirect('pages/reports_archive.php');
+}
+
+// التحقق من صلاحية العرض
+if (!canViewReport($report)) {
+    setError('ليس لديك صلاحية عرض هذا التقرير');
+    redirect('pages/dashboard.php');
+}
+
+// وكيلة الوكالة تشاهد المنشور فقط
+if (isDirector() && $report['status'] !== 'published') {
+    setError('هذا التقرير لم يُنشر بعد');
     redirect('pages/reports_archive.php');
 }
 
@@ -41,12 +54,11 @@ foreach ($details as $detail) {
     );
 }
 
-// التحقق من إمكانية التعديل
-$canEdit = false;
-if (isAdmin()) {
-    $canEdit = true;
-} elseif (isManager() && $report['created_by'] == $_SESSION['user_id'] && isCurrentWeek($report['week_start'], $report['week_end'])) {
-    $canEdit = true;
+// جلب جميع الأقسام لعرض حالة التعبئة
+$departments = getDepartments();
+$filledDepts = [];
+foreach ($details as $d) {
+    $filledDepts[$d['department_id']] = $d;
 }
 ?>
 
@@ -62,12 +74,28 @@ if (isAdmin()) {
         </nav>
     </div>
     <div>
-        <?php if ($canEdit): ?>
+        <?php if (canFillReport() && $report['status'] === 'open'): ?>
+        <a href="<?= SITE_URL ?>/pages/fill_report.php?id=<?= $reportId ?>" class="btn btn-success me-1">
+            <i class="fas fa-pen me-1"></i>تعبئة قسمي
+        </a>
+        <?php endif; ?>
+        <?php if (canEditFullReport()): ?>
         <a href="<?= SITE_URL ?>/pages/edit_report.php?id=<?= $reportId ?>" class="btn btn-warning me-1">
             <i class="fas fa-edit me-1"></i>تعديل
         </a>
+        <?php if ($report['status'] === 'open'): ?>
+        <form method="POST" action="<?= SITE_URL ?>/pages/edit_report.php?id=<?= $reportId ?>" class="d-inline">
+            <?= csrfField() ?>
+            <input type="hidden" name="action" value="publish">
+            <input type="hidden" name="week_start" value="<?= e($report['week_start']) ?>">
+            <input type="hidden" name="week_end" value="<?= e($report['week_end']) ?>">
+            <button type="submit" class="btn btn-primary me-1" onclick="return confirm('هل تريد نشر هذا التقرير؟')">
+                <i class="fas fa-paper-plane me-1"></i>نشر
+            </button>
+        </form>
         <?php endif; ?>
-        <button onclick="window.print()" class="btn btn-outline-secondary">
+        <?php endif; ?>
+        <button onclick="window.print()" class="btn btn-outline-secondary me-1">
             <i class="fas fa-print me-1"></i>طباعة
         </button>
         <a href="<?= SITE_URL ?>/pages/reports_archive.php" class="btn btn-outline-primary">
@@ -75,6 +103,31 @@ if (isAdmin()) {
         </a>
     </div>
 </div>
+
+<?php if ($report['status'] === 'open' && canEditFullReport()): ?>
+<!-- حالة تعبئة الأقسام -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-warning text-dark">
+        <h6 class="mb-0"><i class="fas fa-tasks me-2"></i>حالة تعبئة الأقسام</h6>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <?php foreach ($departments as $dept): ?>
+            <div class="col-md-3">
+                <div class="d-flex align-items-center">
+                    <?php if (isset($filledDepts[$dept['id']]) && !empty($filledDepts[$dept['id']]['achievements'])): ?>
+                        <i class="fas fa-check-circle text-success me-2 fa-lg"></i>
+                    <?php else: ?>
+                        <i class="fas fa-clock text-warning me-2 fa-lg"></i>
+                    <?php endif; ?>
+                    <span><?= e($dept['name']) ?></span>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- معلومات التقرير -->
 <div class="card border-0 shadow-sm mb-4" id="printArea">
@@ -109,45 +162,54 @@ if (isAdmin()) {
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if (empty($details)): ?>
+                    <?php
+                    // عرض جميع الأقسام (المعبأة وغير المعبأة)
+                    foreach ($departments as $dept):
+                        $detail = $filledDepts[$dept['id']] ?? null;
+                        // للمدير/الموظف في التقرير المفتوح: عرض قسمهم فقط
+                        if ($report['status'] === 'open' && (isManager() || isEmployee()) && $dept['id'] != ($_SESSION['user_department_id'] ?? 0)) {
+                            continue;
+                        }
+                    ?>
                     <tr>
-                        <td colspan="4" class="text-center text-muted py-4">لا توجد تفاصيل لهذا التقرير</td>
-                    </tr>
-                    <?php else: ?>
-                        <?php foreach ($details as $detail): ?>
-                        <tr>
-                            <td class="fw-bold">
-                                <i class="fas fa-building text-primary me-1"></i>
-                                <?= e($detail['department_name']) ?>
-                            </td>
-                            <td>
+                        <td class="fw-bold">
+                            <i class="fas fa-building text-primary me-1"></i>
+                            <?= e($dept['name']) ?>
+                            <?php if (!$detail && $report['status'] === 'open'): ?>
+                                <br><small class="text-warning"><i class="fas fa-clock me-1"></i>لم يُعبأ</small>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php if ($detail && !empty($detail['achievements'])): ?>
                                 <div class="report-content"><?= nl2br(e($detail['achievements'])) ?></div>
-                            </td>
-                            <td>
-                                <?php
-                                $attachments = $attachmentsByDetail[$detail['id']] ?? [];
-                                if (empty($attachments)):
-                                ?>
-                                    <span class="text-muted small">لا توجد شواهد</span>
-                                <?php else: ?>
-                                    <?php foreach ($attachments as $att): ?>
-                                    <div class="mb-2">
-                                        <a href="<?= SITE_URL ?>/uploads/<?= e($att['file_path']) ?>"
-                                           class="text-decoration-none" target="_blank" download>
-                                            <i class="fas <?= getFileIcon($att['file_name']) ?> me-1"></i>
-                                            <span class="small"><?= e($att['file_name']) ?></span>
-                                        </a>
-                                        <br><small class="text-muted"><?= formatFileSize($att['file_size']) ?></small>
-                                    </div>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <?= !empty($detail['notes']) ? nl2br(e($detail['notes'])) : '<span class="text-muted small">لا توجد ملاحظات</span>' ?>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
+                            <?php else: ?>
+                                <span class="text-muted small">لم يتم إدخال الإنجازات بعد</span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php
+                            $attachments = $detail ? ($attachmentsByDetail[$detail['id']] ?? []) : [];
+                            if (empty($attachments)):
+                            ?>
+                                <span class="text-muted small">لا توجد شواهد</span>
+                            <?php else: ?>
+                                <?php foreach ($attachments as $att): ?>
+                                <div class="mb-2">
+                                    <a href="<?= SITE_URL ?>/uploads/<?= e($att['file_path']) ?>"
+                                       class="text-decoration-none" target="_blank" download>
+                                        <i class="fas <?= getFileIcon($att['file_name']) ?> me-1"></i>
+                                        <span class="small"><?= e($att['file_name']) ?></span>
+                                    </a>
+                                    <br><small class="text-muted"><?= formatFileSize($att['file_size']) ?></small>
+                                </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <?= ($detail && !empty($detail['notes'])) ? nl2br(e($detail['notes'])) : '<span class="text-muted small">لا توجد ملاحظات</span>' ?>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
                 </tbody>
             </table>
         </div>
