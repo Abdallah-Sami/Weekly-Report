@@ -463,8 +463,8 @@ if (isset($_GET['timeout'])) {
             <div class="shape"></div>
         </div>
         <div class="visual-content">
-            <div class="logo-icon">
-                <i class="fas fa-building-columns"></i>
+            <div class="logo-icon" style="background:none; border:none; width:auto; height:auto; border-radius:0;">
+                <img src="<?= SITE_URL ?>/assets/img/logo.png" alt="الشعار" style="height: 90px;">
             </div>
             <h2><?= e(SITE_NAME) ?></h2>
             <p>نظام إدارة التقارير الأسبوعية<br>لمتابعة إنجازات الأقسام وتوثيق الأعمال بكفاءة عالية</p>

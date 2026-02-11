@@ -41,8 +41,8 @@ $pageTitle = $pageTitle ?? 'لوحة التحكم';
             </button>
 
             <!-- اسم الموقع -->
-            <a class="navbar-brand" href="<?= SITE_URL ?>/pages/dashboard.php">
-                <i class="fas fa-chart-line me-2"></i>
+            <a class="navbar-brand d-flex align-items-center" href="<?= SITE_URL ?>/pages/dashboard.php">
+                <img src="<?= SITE_URL ?>/assets/img/logo.png" alt="الشعار" style="height: 38px; margin-left: 10px;">
                 <span class="d-none d-sm-inline"><?= e(SITE_NAME) ?></span>
                 <span class="d-sm-none">التقارير</span>
             </a>
